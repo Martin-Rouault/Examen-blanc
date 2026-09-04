@@ -1,0 +1,31 @@
+# Dépendances
+node_modules/
+
+# Variables d'environnement (SECRETS - ne jamais commiter)
+.env
+*.env
+!.env.example
+
+# Build / production
+frontend/build/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend/logs/*.log
+
+# Cache / divers
+.cache/
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/

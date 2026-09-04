@@ -1,0 +1,95 @@
+name: CI/CD Pipeline
+
+# Déclenchement : push sur main ou pull request
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  # Job 1: Tests et build du backend
+  backend:
+    name: Backend - Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: Run linter (optionnel)
+        working-directory: ./backend
+        run: echo "Pas de linter configuré pour le moment"
+      
+      - name: Run tests (optionnel)
+        working-directory: ./backend
+        run: echo "Pas de tests configurés pour le moment"
+      
+      - name: Build Docker image
+        working-directory: ./backend
+        run: docker build -t todo-backend:${{ github.sha }} .
+
+  # Job 2: Tests et build du frontend
+  frontend:
+    name: Frontend - Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run build
+        working-directory: ./frontend
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL || 'http://localhost:5000/api' }}
+        run: npm run build
+      
+      - name: Build Docker image
+        working-directory: ./frontend
+        run: docker build -t todo-frontend:${{ github.sha }} .
+
+  # Job 3: Security audit
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Audit backend dependencies
+        working-directory: ./backend
+        run: npm audit --audit-level=high
+        continue-on-error: true
+      
+      - name: Audit frontend dependencies
+        working-directory: ./frontend
+        run: npm audit --audit-level=high
+        continue-on-error: true
